@@ -2,17 +2,50 @@ var toDot = require('jsonpath-to-dot');
 
 module.exports = function(patches){
   var update = {};
-  patches.map(function(p){
+  patches.forEach(function(p){
     if(p.op === 'add'){
-      var path = toDot(p.path);
-      if(!update.$push) update.$push = {};
-      if(!update.$push[path]) {
-        update.$push[path] = p.value;
-      } else if (update.$push[path]) {
-        if(!update.$push[path].$each) {
-          update.$push[path] = {$each : [update.$push[path]]};
+      var path = toDot(p.path)
+      var parts = path.split('.');
+
+      var key = parts[0];
+      var $position = parts[1] && parseInt(parts[1], 10);
+
+      update.$push = update.$push || {};
+
+      if (!isNaN($position)) {
+        if (update.$push[key]) {
+          if (!isNaN(update.$push[key].$position)) {
+            $position = update.$push[key].$position;
+            delete update.$push[key].$position;
+          }
+
+          if (!update.$push[key].$each) {
+            update.$push[key] = {
+              $each: [
+                update.$push[key]
+              ]
+            };
+          }
+
+          update.$push[key].$each.push(p.value);
+          update.$push[key].$position = $position;
+        } else {
+          update.$push[key] = {
+            $each: [p.value],
+            $position: $position
+          };
         }
-        update.$push[path].$each.push(p.value);
+      } else {
+        if (update.$push[key]) {
+          if (!update.$push[key].$each) {
+            update.$push[key] = {
+              $each: [update.$push[key]]
+            };
+          }
+          update.$push[path].$each.push(p.value);
+        } else {
+          update.$push[path] = p.value;
+        }
       }
     }
     else if(p.op === 'remove'){

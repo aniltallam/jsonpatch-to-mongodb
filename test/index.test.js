@@ -1,32 +1,51 @@
-var assert = require('assert');
-var toMongodb = require('../');
-var chai = require('chai');
+var assert = require('assert')
+// var toMongodb = require('../');
+var toMongodb = require('../jsonPatchUtil').jsonPatchToMongoUpdateObject
+var chai = require('chai')
 
-describe('jsonpatch to mongodb', function() {
-
-  it('should work with single add', function() {
+describe('jsonpatch to mongodb', function () {
+  it('should work with single add', function () {
     var patches = [{
       op: 'add',
       path: '/name',
       value: 'dave'
-    }];
-
+    }]
     var expected = {
-      $push: {
+      $set: {
         name: 'dave'
       }
-    };
+    }
+    assert.deepEqual(toMongodb(patches), expected)
+  })
 
-    assert.deepEqual(toMongodb(patches), expected);
-  });
+  it('should work with multiple adds', function () {
+    var patches = [{
+      op: 'add',
+      path: '/name',
+      value: 'dave'
+    }, {
+      op: 'add',
+      path: '/name',
+      value: 'bob'
+    }, {
+      op: 'add',
+      path: '/name',
+      value: 'john'
+    }]
+    var expected = {
+      $set: {
+        name: 'john'
+      }
+    }
+    assert.deepEqual(toMongodb(patches), expected)
+  })
 
-  it('should work with array set', function() {
+  it('should work with array set', function () {
     var patches = [{
       op: 'add',
       path: '/name/1',
       value: 'dave'
-    }];
-
+    }]
     var expected = {
       $push: {
         name: {
@@ -36,12 +55,11 @@ describe('jsonpatch to mongodb', function() {
           $position: 1
         }
       }
-    };
+    }
+    assert.deepEqual(toMongodb(patches), expected)
+  })
 
-    assert.deepEqual(toMongodb(patches), expected);
-  });
-
-  it('should work with multiple set', function() {
+  it('should work with multiple set', function () {
     var patches = [{
       op: 'add',
       path: '/name/1',
@@ -50,111 +68,102 @@ describe('jsonpatch to mongodb', function() {
       op: 'add',
       path: '/name/2',
       value: 'bob'
-    }];
+    }]
+    // var expected = {
+    //   $push: {
+    //     name: {
+    //       $each: [
+    //         'dave',
+    //         'bob'
+    //       ],
+    //       $position: 1
+    //     }
+    //   }
+    // }
+    // assert.deepEqual(toMongodb(patches), expected)
+    chai.expect(function () { toMongodb(patches) }).to.throw('Invalid Operation')
+  })
 
-    var expected = {
-      $push: {
-        name: {
-          $each: [
-            'dave',
-            'bob'
-          ],
-          $position: 1
-        }
-      }
-    };
-
-    assert.deepEqual(toMongodb(patches), expected);
-  });
-
-  it('should work with multiple adds', function() {
+  it('should work with multiple adds -', function () {
     var patches = [{
       op: 'add',
-      path: '/name',
+      path: '/name/-',
       value: 'dave'
-    },{
+    }, {
       op: 'add',
-      path: '/name',
+      path: '/name/-',
       value: 'bob'
-    },{
+    }, {
       op: 'add',
-      path: '/name',
+      path: '/name/-',
       value: 'john'
-    }];
-
+    }]
     var expected = {
       $push: {
         name: {$each: ['dave', 'bob', 'john']}
       }
-    };
+    }
+    assert.deepEqual(toMongodb(patches), expected)
+  })
 
-    assert.deepEqual(toMongodb(patches), expected);
-  });
-
-  it('should work with remove', function() {
+  it('should work with remove', function () {
     var patches = [{
       op: 'remove',
       path: '/name',
       value: 'dave'
-    }];
-
+    }]
     var expected = {
       $unset: {
-        name: 1
+        name: ''
       }
-    };
+    }
+    assert.deepEqual(toMongodb(patches), expected)
+  })
 
-    assert.deepEqual(toMongodb(patches), expected);
-  });
-
-  it('should work with replace', function() {
+  it('should work with replace', function () {
     var patches = [{
       op: 'replace',
       path: '/name',
       value: 'dave'
-    }];
-
+    }]
     var expected = {
       $set: {
         name: 'dave'
       }
-    };
+    }
+    assert.deepEqual(toMongodb(patches), expected)
+  })
 
-    assert.deepEqual(toMongodb(patches), expected);
-  });
-
-  it('should work with test', function() {
-    var patches = [{
-      op: 'test',
-      path: '/name',
-      value: 'dave'
-    }];
-
-    var expected = {};
-
-    assert.deepEqual(toMongodb(patches), expected);
-  });
-
-  it('should blow up on move', function() {
+  it('should blow up on move', function () {
     var patches = [{
       op: 'move',
       path: '/name',
       from: '/old_name'
-    }];
+    }]
+    var expected = {
+      $rename: {
+        old_name: 'name'
+      }
+    }
+    assert.deepEqual(toMongodb(patches), expected)
+  })
 
-    chai.expect(function(){toMongodb(patches)}).to.throw('Unsupported Operation! op = move');
+  it('should blow up on test', function () {
+    var patches = [{
+      op: 'test',
+      path: '/name',
+      value: 'dave'
+    }]
+    chai.expect(function () { toMongodb(patches) }).to.throw('Operation \'test\' is not supported')
+  })
 
-  });
-
-
-  it('should blow up on copy', function() {
+  it('should blow up on copy', function () {
     var patches = [{
       op: 'copy',
       path: '/name',
       from: '/old_name'
-    }];
-
-    chai.expect(function(){toMongodb(patches)}).to.throw('Unsupported Operation! op = copy');
-  });
-});
+    }]
+    chai.expect(function () { toMongodb(patches) }).to.throw('Operation \'copy\' is not supported')
+  })
+})
 

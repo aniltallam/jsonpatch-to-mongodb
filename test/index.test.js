@@ -1,6 +1,6 @@
 var assert = require('assert')
 // var toMongodb = require('../');
-var toMongodb = require('../jsonPatchUtil').jsonPatchToMongoUpdateObject
+var toMongoPatch = require('../jsonPatchUtil').toMongoPatch
 var chai = require('chai')
 
 describe('jsonpatch to mongodb', function () {
@@ -15,7 +15,7 @@ describe('jsonpatch to mongodb', function () {
         name: 'dave'
       }
     }
-    assert.deepEqual(toMongodb(patches), expected)
+    assert.deepEqual(toMongoPatch(patches), expected)
   })
 
   it('should work with multiple adds', function () {
@@ -37,7 +37,7 @@ describe('jsonpatch to mongodb', function () {
         name: 'john'
       }
     }
-    assert.deepEqual(toMongodb(patches), expected)
+    assert.deepEqual(toMongoPatch(patches), expected)
   })
 
   it('should work with array set', function () {
@@ -56,7 +56,7 @@ describe('jsonpatch to mongodb', function () {
         }
       }
     }
-    assert.deepEqual(toMongodb(patches), expected)
+    assert.deepEqual(toMongoPatch(patches), expected)
   })
 
   it('should work with multiple set', function () {
@@ -81,7 +81,7 @@ describe('jsonpatch to mongodb', function () {
     //   }
     // }
     // assert.deepEqual(toMongodb(patches), expected)
-    chai.expect(function () { toMongodb(patches) }).to.throw('Invalid Operation')
+    chai.expect(function () { toMongoPatch(patches) }).to.throw('Cannot support insertion at multiple positions')
   })
 
   it('should work with multiple adds -', function () {
@@ -103,7 +103,7 @@ describe('jsonpatch to mongodb', function () {
         name: {$each: ['dave', 'bob', 'john']}
       }
     }
-    assert.deepEqual(toMongodb(patches), expected)
+    assert.deepEqual(toMongoPatch(patches), expected)
   })
 
   it('should work with remove', function () {
@@ -117,7 +117,7 @@ describe('jsonpatch to mongodb', function () {
         name: ''
       }
     }
-    assert.deepEqual(toMongodb(patches), expected)
+    assert.deepEqual(toMongoPatch(patches), expected)
   })
 
   it('should work with replace', function () {
@@ -131,7 +131,7 @@ describe('jsonpatch to mongodb', function () {
         name: 'dave'
       }
     }
-    assert.deepEqual(toMongodb(patches), expected)
+    assert.deepEqual(toMongoPatch(patches), expected)
   })
 
   it('should blow up on move', function () {
@@ -145,7 +145,7 @@ describe('jsonpatch to mongodb', function () {
         old_name: 'name'
       }
     }
-    assert.deepEqual(toMongodb(patches), expected)
+    assert.deepEqual(toMongoPatch(patches), expected)
   })
 
   it('should blow up on test', function () {
@@ -154,7 +154,7 @@ describe('jsonpatch to mongodb', function () {
       path: '/name',
       value: 'dave'
     }]
-    chai.expect(function () { toMongodb(patches) }).to.throw('Operation \'test\' is not supported')
+    chai.expect(function () { toMongoPatch(patches) }).to.throw('Operation \'test\' is not supported')
   })
 
   it('should blow up on copy', function () {
@@ -163,7 +163,7 @@ describe('jsonpatch to mongodb', function () {
       path: '/name',
       from: '/old_name'
     }]
-    chai.expect(function () { toMongodb(patches) }).to.throw('Operation \'copy\' is not supported')
+    chai.expect(function () { toMongoPatch(patches) }).to.throw('Operation \'copy\' is not supported')
   })
 })
 

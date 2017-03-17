@@ -1,11 +1,11 @@
-var toMongodb = require('../jsonPatchUtil').jsonPatchToMongoUpdateObject
+var toMongoPatch = require('../jsonPatchUtil').toMongoPatch
 var jsonpatch = require('fast-json-patch')
 var mongoose = require('mongoose')
 var Schema = mongoose.Schema
 var should = require('should')
 
 mongoose.set('debug', true)
-describe.only('mytests', function () {
+describe('test on mongo db', function () {
   var TestModel
   before(function (done) {
     mongoose.connect('mongodb://localhost/local')
@@ -257,7 +257,7 @@ describe.only('mytests', function () {
     mongoDoc.save(function (err, mongoDoc) {
       if (err) return callback(err)
       console.log('patchData ->', JSON.stringify(patchData, null, 2))
-      var updateObj = toMongodb(patchData)
+      var updateObj = toMongoPatch(patchData)
       console.log('updateObj ->', JSON.stringify(updateObj, null, 2))
       TestModel.update({_id: mongoDoc._id}, updateObj, {}, function (err, rawMongoResponse) {
         if (err) return callback(err)

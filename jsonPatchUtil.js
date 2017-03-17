@@ -1,4 +1,4 @@
-function jsonPatchToMongoUpdateObject (jsonPatch) {
+function toMongoPatch (jsonPatch) {
   var mongoUpdate = {}
   jsonPatch.forEach(function (oprn) {
     if (!oprn['op']) throw new Error('missing \'op\' property in patch operation data')
@@ -122,4 +122,4 @@ function getLastToken (jsonPath) {
   return jsonPath.split('/').slice(-1)[0]
 }
 
-exports.jsonPatchToMongoUpdateObject = jsonPatchToMongoUpdateObject
+exports.toMongoPatch = toMongoPatch
